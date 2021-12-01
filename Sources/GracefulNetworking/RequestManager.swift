@@ -59,13 +59,7 @@ extension URLRequest {
     }
     
     private var defaultAcceptEncoding: String {
-        let encodings: [String]
-        if #available(iOS 11.0, macOS 10.13, tvOS 11.0, watchOS 4.0, *) {
-            encodings = ["br", "gzip", "deflate"]
-        } else {
-            encodings = ["gzip", "deflate"]
-        }
-        
+        let encodings: [String] = [ "identity" ]
         return encodings.qualityEncoded()
     }
     
