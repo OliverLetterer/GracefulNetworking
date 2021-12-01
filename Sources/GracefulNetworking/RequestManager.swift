@@ -711,7 +711,7 @@ public extension NN.RequestManager.RequestProjection {
                     
                     do {
                         if FileManager.default.fileExists(atPath: destination.path) {
-                            let _ = try FileManager.default.replaceItemAt(temporary, withItemAt: destination)
+                            let _ = try FileManager.default.replaceItemAt(destination, withItemAt: temporary)
                         } else {
                             try FileManager.default.moveItem(at: temporary, to: destination)
                         }
@@ -759,7 +759,7 @@ public extension NN.RequestManager.RequestProjection {
         }
         
         if FileManager.default.fileExists(atPath: destination.path) {
-            let _ = try FileManager.default.replaceItemAt(temporary, withItemAt: destination)
+            let _ = try FileManager.default.replaceItemAt(destination, withItemAt: temporary)
         } else {
             try FileManager.default.moveItem(at: temporary, to: destination)
         }
