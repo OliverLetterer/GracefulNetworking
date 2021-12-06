@@ -4,7 +4,7 @@
 
 [![Platforms](https://img.shields.io/badge/Platforms-macOS_iOS_tvOS_watchOS_Linux-green?style=flat-square)](https://img.shields.io/badge/Platforms-macOS_iOS_tvOS_watchOS_Linux-green?style=flat-square)
 [![Swift](https://img.shields.io/badge/Swift-5.5-green?style=flat-square)](https://img.shields.io/badge/Swift-5.5-green?style=flat-square)
-[![Swift Package Manager](https://img.shields.io/badge/Swift_Package_Manager-compatible-orange?style=flat-square)](https://img.shields.io/badge/Swift_Package_Manager-compatible-orange?style=flat-square)
+[![Swift Package Manager](https://img.shields.io/badge/Swift_Package_Manager-compatible-critical?style=flat-square)](https://img.shields.io/badge/Swift_Package_Manager-compatible-critical?style=flat-square)
 
 Based on [AsyncHTTPClient](https://github.com/swift-server/async-http-client).
 
