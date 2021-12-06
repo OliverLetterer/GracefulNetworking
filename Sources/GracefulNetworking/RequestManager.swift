@@ -431,8 +431,9 @@ public extension NN.RequestManager.RequestProjection {
                     let response = HTTPURLResponse(request: request, response: clientResponse)
                     
                     guard requestManager.acceptableStatusCodes.contains(response.statusCode) else {
+                        let data = clientResponse.responseData
                         DispatchQueue.main.async {
-                            completion(.init(request: request, response: response, data: nil, body: nil), NNError.responseStatusCodeFailed(response))
+                            completion(.init(request: request, response: response, data: data, body: nil), NNError.responseStatusCodeFailed(response))
                         }
                         return
                     }
@@ -474,8 +475,9 @@ public extension NN.RequestManager.RequestProjection {
                     let response = HTTPURLResponse(request: request, response: clientResponse)
                     
                     guard requestManager.acceptableStatusCodes.contains(response.statusCode) else {
+                        let data = clientResponse.responseData
                         DispatchQueue.main.async {
-                            completion(.init(request: request, response: response, data: nil, body: nil), NNError.responseStatusCodeFailed(response))
+                            completion(.init(request: request, response: response, data: data, body: nil), NNError.responseStatusCodeFailed(response))
                         }
                         return
                     }
@@ -526,8 +528,9 @@ public extension NN.RequestManager.RequestProjection {
                     let response = HTTPURLResponse(request: request, response: clientResponse)
                     
                     guard requestManager.acceptableStatusCodes.contains(response.statusCode) else {
+                        let data = clientResponse.responseData
                         DispatchQueue.main.async {
-                            completion(.init(request: request, response: response, data: nil, body: nil), NNError.responseStatusCodeFailed(response))
+                            completion(.init(request: request, response: response, data: data, body: nil), NNError.responseStatusCodeFailed(response))
                         }
                         return
                     }
@@ -607,8 +610,9 @@ public extension NN.RequestManager.RequestProjection {
                     let response = HTTPURLResponse(request: request, response: clientResponse)
                     
                     guard requestManager.acceptableStatusCodes.contains(response.statusCode) else {
+                        let data = clientResponse.responseData
                         DispatchQueue.main.async {
-                            completion(.init(request: request, response: response, data: nil, body: nil), NNError.responseStatusCodeFailed(response))
+                            completion(.init(request: request, response: response, data: data, body: nil), NNError.responseStatusCodeFailed(response))
                         }
                         return
                     }
