@@ -382,7 +382,7 @@ extension NN.RequestManager {
         return encoder
     }
     
-    public func download(_ url: NNURLConvertible, parameters: [String: NNWWWURLFormEncodable] = [:], headers: [(key: String, value: String)] = [], destination: URL, downloadProgress: ((Int, Int?) -> Void)? = nil, completion: @escaping (RequestProjection.Response<()>?, Error?) -> Void) {
+    public func download(_ url: NNURLConvertible, parameters: [String: NNWWWURLFormEncodable] = [:], headers: [(key: String, value: String)] = [], destination: URL, downloadProgress: ((HTTPURLResponse, Int, Int?) -> Void)? = nil, completion: @escaping (RequestProjection.Response<()>?, Error?) -> Void) {
         self.get(url, parameters: parameters, headers: headers).download(destination: destination, downloadProgress: downloadProgress, completion: completion)
     }
     
@@ -656,7 +656,7 @@ public extension NN.RequestManager.RequestProjection {
         return .init(request: request, response: response, data: data, body: result)
     }
     
-    func download(destination: URL, downloadProgress: ((Int, Int?) -> Void)? = nil, completion: @escaping (Response<()>?, Error?) -> Void) {
+    func download(destination: URL, downloadProgress: ((HTTPURLResponse, Int, Int?) -> Void)? = nil, completion: @escaping (Response<()>?, Error?) -> Void) {
         switch request {
         case let .request(request):
             var temporary: URL = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(UUID().uuidString)
@@ -668,12 +668,13 @@ public extension NN.RequestManager.RequestProjection {
             let delegate = try! FileDownloadDelegate(path: temporary.path, reportHead: { head in
                 responseHead = head
             }, reportProgress: { progress in
-                if let downloadProgress = downloadProgress {
+                if let downloadProgress = downloadProgress, let responseHead = responseHead {
+                    let response = HTTPURLResponse(request: request, response: responseHead)
                     let received = progress.receivedBytes
                     let total = progress.totalBytes
                     
                     DispatchQueue.main.async {
-                        downloadProgress(received, total)
+                        downloadProgress(response, received, total)
                     }
                 }
             })
