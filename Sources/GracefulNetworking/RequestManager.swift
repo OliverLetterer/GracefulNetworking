@@ -180,16 +180,16 @@ extension String.Encoding {
 public struct NN {
     public static let shared: RequestManager = RequestManager()
     
-    public class RequestManager {
-        public struct RequestProjection {
-            fileprivate let requestManager: RequestManager
+    public class RequestManager: RequestManagerImplementation {
+        public struct RequestProjection<Manager: RequestManager> {
+            let requestManager: Manager
             
-            fileprivate enum State {
+            enum State {
                 case request(URLRequest)
                 case failed(Error)
             }
             
-            fileprivate let request: State
+            let request: State
             
             public func getRequest() throws -> URLRequest {
                 switch request {
@@ -202,7 +202,7 @@ public struct NN {
         }
         
         public let eventLoopGroup: MultiThreadedEventLoopGroup
-        private let httpClient: HTTPClient
+        let httpClient: HTTPClient
         
         public let acceptableStatusCodes: Set<Int>
         public var dateCodingStrategyByHost: [String: (encoding: JSONEncoder.DateEncodingStrategy, decoding: JSONDecoder.DateDecodingStrategy)] = [:]
@@ -231,95 +231,101 @@ public struct NN {
                 DispatchQueue.main.async(execute: finish)
             }
         }
-        
-        public func request(_ request: URLRequest) -> RequestProjection {
-            return RequestProjection(requestManager: self, request: .request(request))
-        }
-        
-        public func get(_ url: NNURLConvertible, parameters: [String: NNWWWURLFormEncodable] = [:], headers: [(key: String, value: String)] = []) -> RequestProjection {
-            guard let url = url.convertToURL else {
-                return RequestProjection(requestManager: self, request: .failed(NNError.invalidURL(url)))
-            }
-            
-            guard let components = URLComponents(string: url.absoluteString, parameters: parameters), let url = components.url else {
-                return RequestProjection(requestManager: self, request: .failed(NNError.invalidParameters(parameters)))
-            }
-            
-            var request = URLRequest(gracefulNetworkingURL: url, method: "GET")
-            
-            headers.forEach { key, value in
-                request.allHTTPHeaderFields![key] = value
-            }
-            
-            return self.request(request)
-        }
-        
-        public func post(_ url: NNURLConvertible, parameters: [String: NNWWWURLFormEncodable] = [:], headers: [(key: String, value: String)] = []) -> RequestProjection {
-            return self.requestBody(method: "POST", url: url, parameters: parameters, headers: headers)
-        }
-        
-        public func put(_ url: NNURLConvertible, parameters: [String: NNWWWURLFormEncodable] = [:], headers: [(key: String, value: String)] = []) -> RequestProjection {
-            return self.requestBody(method: "PUT", url: url, parameters: parameters, headers: headers)
-        }
-        
-        public func patch(_ url: NNURLConvertible, parameters: [String: NNWWWURLFormEncodable] = [:], headers: [(key: String, value: String)] = []) -> RequestProjection {
-            return self.requestBody(method: "PATCH", url: url, parameters: parameters, headers: headers)
-        }
-        
-        public func post<T: Encodable>(_ url: NNURLConvertible, body: T, encoder: JSONEncoder? = nil, headers: [(key: String, value: String)] = []) -> RequestProjection {
-            let encoder = encoder ?? self.encoder(forHost: url.convertToURL?.host)
-            
-            do {
-                let data = try encoder.encode(body)
-                return self.requestBody(method: "POST", url: url, headers: headers, body: ("application/json; charset=utf-8", data))
-            } catch {
-                return RequestProjection(requestManager: self, request: .failed(error))
-            }
-        }
-        
-        public func put<T: Encodable>(_ url: NNURLConvertible, body: T, encoder: JSONEncoder? = nil, headers: [(key: String, value: String)] = []) -> RequestProjection {
-            let encoder = encoder ?? self.encoder(forHost: url.convertToURL?.host)
-            
-            do {
-                let data = try encoder.encode(body)
-                return self.requestBody(method: "PUT", url: url, headers: headers, body: ("application/json; charset=utf-8", data))
-            } catch {
-                return RequestProjection(requestManager: self, request: .failed(error))
-            }
-        }
-        
-        public func patch<T: Encodable>(_ url: NNURLConvertible, body: T, encoder: JSONEncoder? = nil, headers: [(key: String, value: String)] = []) -> RequestProjection {
-            let encoder = encoder ?? self.encoder(forHost: url.convertToURL?.host)
-            
-            do {
-                let data = try encoder.encode(body)
-                return self.requestBody(method: "PATCH", url: url, headers: headers, body: ("application/json; charset=utf-8", data))
-            } catch {
-                return RequestProjection(requestManager: self, request: .failed(error))
-            }
-        }
-        
-        public func delete(_ url: NNURLConvertible, parameters: [String: NNWWWURLFormEncodable] = [:], headers: [(key: String, value: String)] = []) -> RequestProjection {
-            guard let url = url.convertToURL else {
-                return RequestProjection(requestManager: self, request: .failed(NNError.invalidURL(url)))
-            }
-            
-            guard let components = URLComponents(string: url.absoluteString, parameters: parameters), let url = components.url else {
-                return RequestProjection(requestManager: self, request: .failed(NNError.invalidParameters(parameters)))
-            }
-            
-            var request = URLRequest(gracefulNetworkingURL: url, method: "DELETE")
-            headers.forEach { key, value in
-                request.allHTTPHeaderFields![key] = value
-            }
-            
-            return self.request(request)
-        }
     }
 }
 
-extension NN.RequestManager {
-    private func requestBody(method: String, url: NNURLConvertible, parameters: [String: NNWWWURLFormEncodable], headers: [(key: String, value: String)]) -> RequestProjection {
+public protocol RequestManagerImplementation where Self: NN.RequestManager {
+    
+}
+
+extension RequestManagerImplementation {
+    public func request(_ request: URLRequest) -> RequestProjection<Self> {
+        return RequestProjection(requestManager: self, request: .request(request))
+    }
+    
+    public func get(_ url: NNURLConvertible, parameters: [String: NNWWWURLFormEncodable] = [:], headers: [(key: String, value: String)] = []) -> RequestProjection<Self> {
+        guard let url = url.convertToURL else {
+            return RequestProjection(requestManager: self, request: .failed(NNError.invalidURL(url)))
+        }
+        
+        guard let components = URLComponents(string: url.absoluteString, parameters: parameters), let url = components.url else {
+            return RequestProjection(requestManager: self, request: .failed(NNError.invalidParameters(parameters)))
+        }
+        
+        var request = URLRequest(gracefulNetworkingURL: url, method: "GET")
+        
+        headers.forEach { key, value in
+            request.allHTTPHeaderFields![key] = value
+        }
+        
+        return self.request(request)
+    }
+    
+    public func post(_ url: NNURLConvertible, parameters: [String: NNWWWURLFormEncodable] = [:], headers: [(key: String, value: String)] = []) -> RequestProjection<Self> {
+        return self.requestBody(method: "POST", url: url, parameters: parameters, headers: headers)
+    }
+    
+    public func put(_ url: NNURLConvertible, parameters: [String: NNWWWURLFormEncodable] = [:], headers: [(key: String, value: String)] = []) -> RequestProjection<Self> {
+        return self.requestBody(method: "PUT", url: url, parameters: parameters, headers: headers)
+    }
+    
+    public func patch(_ url: NNURLConvertible, parameters: [String: NNWWWURLFormEncodable] = [:], headers: [(key: String, value: String)] = []) -> RequestProjection<Self> {
+        return self.requestBody(method: "PATCH", url: url, parameters: parameters, headers: headers)
+    }
+    
+    public func post<T: Encodable>(_ url: NNURLConvertible, body: T, encoder: JSONEncoder? = nil, headers: [(key: String, value: String)] = []) -> RequestProjection<Self> {
+        let encoder = encoder ?? self.encoder(forHost: url.convertToURL?.host)
+        
+        do {
+            let data = try encoder.encode(body)
+            return self.requestBody(method: "POST", url: url, headers: headers, body: ("application/json; charset=utf-8", data))
+        } catch {
+            return RequestProjection(requestManager: self, request: .failed(error))
+        }
+    }
+    
+    public func put<T: Encodable>(_ url: NNURLConvertible, body: T, encoder: JSONEncoder? = nil, headers: [(key: String, value: String)] = []) -> RequestProjection<Self> {
+        let encoder = encoder ?? self.encoder(forHost: url.convertToURL?.host)
+        
+        do {
+            let data = try encoder.encode(body)
+            return self.requestBody(method: "PUT", url: url, headers: headers, body: ("application/json; charset=utf-8", data))
+        } catch {
+            return RequestProjection(requestManager: self, request: .failed(error))
+        }
+    }
+    
+    public func patch<T: Encodable>(_ url: NNURLConvertible, body: T, encoder: JSONEncoder? = nil, headers: [(key: String, value: String)] = []) -> RequestProjection<Self> {
+        let encoder = encoder ?? self.encoder(forHost: url.convertToURL?.host)
+        
+        do {
+            let data = try encoder.encode(body)
+            return self.requestBody(method: "PATCH", url: url, headers: headers, body: ("application/json; charset=utf-8", data))
+        } catch {
+            return RequestProjection(requestManager: self, request: .failed(error))
+        }
+    }
+    
+    public func delete(_ url: NNURLConvertible, parameters: [String: NNWWWURLFormEncodable] = [:], headers: [(key: String, value: String)] = []) -> RequestProjection<Self> {
+        guard let url = url.convertToURL else {
+            return RequestProjection(requestManager: self, request: .failed(NNError.invalidURL(url)))
+        }
+        
+        guard let components = URLComponents(string: url.absoluteString, parameters: parameters), let url = components.url else {
+            return RequestProjection(requestManager: self, request: .failed(NNError.invalidParameters(parameters)))
+        }
+        
+        var request = URLRequest(gracefulNetworkingURL: url, method: "DELETE")
+        headers.forEach { key, value in
+            request.allHTTPHeaderFields![key] = value
+        }
+        
+        return self.request(request)
+    }
+}
+
+extension RequestManagerImplementation {
+    private func requestBody(method: String, url: NNURLConvertible, parameters: [String: NNWWWURLFormEncodable], headers: [(key: String, value: String)]) -> RequestProjection<Self> {
         guard let url = url.convertToURL else {
             return RequestProjection(requestManager: self, request: .failed(NNError.invalidURL(url)))
         }
@@ -352,7 +358,7 @@ extension NN.RequestManager {
         return RequestProjection(requestManager: self, request: .request(request))
     }
     
-    private func requestBody(method: String, url: NNURLConvertible, headers: [(key: String, value: String)], body: (String, Data)) -> RequestProjection {
+    private func requestBody(method: String, url: NNURLConvertible, headers: [(key: String, value: String)], body: (String, Data)) -> RequestProjection<Self> {
         guard let url = url.convertToURL else {
             return RequestProjection(requestManager: self, request: .failed(NNError.invalidURL(url)))
         }
@@ -381,18 +387,20 @@ extension NN.RequestManager {
         
         return encoder
     }
-    
-    public func download(_ url: NNURLConvertible, parameters: [String: NNWWWURLFormEncodable] = [:], headers: [(key: String, value: String)] = [], destination: URL, downloadProgress: ((HTTPURLResponse, Int, Int?) -> Void)? = nil, completion: @escaping (RequestProjection.Response<()>?, Error?) -> Void) {
+}
+
+extension RequestManagerImplementation {
+    public func download(_ url: NNURLConvertible, parameters: [String: NNWWWURLFormEncodable] = [:], headers: [(key: String, value: String)] = [], destination: URL, downloadProgress: ((HTTPURLResponse, Int, Int?) -> Void)? = nil, completion: @escaping (RequestProjection<Self>.Response<()>?, Error?) -> Void) {
         self.get(url, parameters: parameters, headers: headers).download(destination: destination, downloadProgress: downloadProgress, completion: completion)
     }
     
-    public func download(_ url: NNURLConvertible, parameters: [String: NNWWWURLFormEncodable] = [:], headers: [(key: String, value: String)] = [], destination: URL) async throws -> RequestProjection.Response<()> {
+    public func download(_ url: NNURLConvertible, parameters: [String: NNWWWURLFormEncodable] = [:], headers: [(key: String, value: String)] = [], destination: URL) async throws -> RequestProjection<Self>.Response<()> {
         return try await self.get(url, parameters: parameters, headers: headers).download(destination: destination)
     }
 }
 
 public extension NN.RequestManager.RequestProjection {
-    func with(_ middlewares: NNRequestInterceptor...) -> NN.RequestManager.RequestProjection {
+    func with(_ middlewares: NNRequestInterceptor...) -> NN.RequestManager.RequestProjection<Manager> {
         switch request {
         case let .failed(error):
             return .init(requestManager: requestManager, request: .failed(error))
