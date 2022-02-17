@@ -202,6 +202,7 @@ public struct NN {
         }
         
         public let eventLoopGroup: MultiThreadedEventLoopGroup
+        private let downloadPool: NIOThreadPool = NIOThreadPool(numberOfThreads: 1)
         let httpClient: HTTPClient
         
         public let acceptableStatusCodes: Set<Int>
@@ -219,9 +220,11 @@ public struct NN {
         deinit {
             let eventLoopGroup = self.eventLoopGroup
             let httpClient = self.httpClient
+            let downloadPool = self.downloadPool
             
             let finish: () -> Void = {
                 try! httpClient.syncShutdown()
+                try! downloadPool.syncShutdownGracefully()
                 let _ = eventLoopGroup
             }
             
@@ -677,7 +680,7 @@ public extension NN.RequestManager.RequestProjection {
             }
             
             var responseHead: HTTPResponseHead? = nil
-            let delegate = try! FileDownloadDelegate(path: temporary.path, reportHead: { head in
+            let delegate = try! FileDownloadDelegate(path: temporary.path, pool: requestManager.downloadPool, reportHead: { head in
                 responseHead = head
             }, reportProgress: { progress in
                 if let downloadProgress = downloadProgress, let responseHead = responseHead {
@@ -749,7 +752,7 @@ public extension NN.RequestManager.RequestProjection {
         }
         
         var responseHead: HTTPResponseHead? = nil
-        let delegate = try! FileDownloadDelegate(path: temporary.path, reportHead: { head in
+        let delegate = try! FileDownloadDelegate(path: temporary.path, pool: requestManager.downloadPool, reportHead: { head in
             responseHead = head
         })
         
