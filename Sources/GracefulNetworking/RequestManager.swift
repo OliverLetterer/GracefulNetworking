@@ -402,7 +402,7 @@ public extension NN_RequestManager where Self: NN.RequestManager {
     }
 }
 
-public extension NNRequestProjection where Manager: NN.RequestManager {
+public extension NNRequestProjection {
     func with(_ middlewares: NNRequestInterceptor...) -> NNRequestProjection<Manager> {
         switch request {
         case let .failed(error):
