@@ -13,7 +13,7 @@ import NIOHTTP1
 
 extension NN {
     public class StreamingRequestManager: RequestManager {
-        
+        public typealias Manager = StreamingRequestManager
     }
 }
 
@@ -21,7 +21,7 @@ public protocol StreamHandle: AnyObject {
     func cancel()
 }
 
-public extension NN.RequestManager.RequestProjection where Manager: NN.StreamingRequestManager {
+public extension NNRequestProjection where Manager: NN.StreamingRequestManager {
     private class StreamingDelegate: HTTPClientResponseDelegate {
         typealias Response = ()
         
