@@ -15,6 +15,12 @@ import AsyncHTTPClient
 import NIO
 import NIOHTTP1
 
+public var defaultConfiguration: HTTPClient.Configuration {
+    var result = HTTPClient.Configuration(timeout: .init(connect: .seconds(60), read: .seconds(10)))
+    result.decompression = .enabled(limit: .none)
+    return result
+}
+
 extension URLComponents {
     internal init?(string: String, parameters: [String: NNWWWURLFormEncodable]) {
         guard var result = URLComponents(string: string) else {
@@ -53,14 +59,8 @@ extension URLRequest {
         self.httpMethod = method
         self.allHTTPHeaderFields = [:]
         
-        self.allHTTPHeaderFields!["Accept-Encoding"] = defaultAcceptEncoding
         self.allHTTPHeaderFields!["User-Agent"] = self.defaultUserAgent
         self.allHTTPHeaderFields!["Accept-Language"] = Locale.preferredLanguages.prefix(6).qualityEncoded()
-    }
-    
-    private var defaultAcceptEncoding: String {
-        let encodings: [String] = [ "identity" ]
-        return encodings.qualityEncoded()
     }
     
     private var defaultUserAgent: String {
@@ -214,7 +214,7 @@ public struct NN {
         public let acceptableStatusCodes: Set<Int>
         public var dateCodingStrategyByHost: [String: (encoding: JSONEncoder.DateEncodingStrategy, decoding: JSONDecoder.DateDecodingStrategy)] = [:]
         
-        public init(eventLoopGroup: MultiThreadedEventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: 2), configuration: HTTPClient.Configuration = HTTPClient.Configuration(timeout: .init(connect: .seconds(60), read: .seconds(10))), acceptableStatusCodes: Set<Int> = Set(200..<400)) {
+        public init(eventLoopGroup: MultiThreadedEventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: 2), configuration: HTTPClient.Configuration = defaultConfiguration, acceptableStatusCodes: Set<Int> = Set(200..<400)) {
             var copy = configuration
             copy.httpVersion = .http1Only
             
